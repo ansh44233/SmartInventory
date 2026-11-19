@@ -273,6 +273,96 @@ curl http://localhost:8000/analytics/monthly-trend
 
 ---
 
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Client                             │
+│          Browser (dashboard) · curl · any HTTP          │
+└──────────────────────┬──────────────────────────────────┘
+                       │ HTTP
+┌──────────────────────▼──────────────────────────────────┐
+│                   FastAPI (api/main.py)                  │
+│                                                         │
+│  /products   /orders   /analytics/*   /  (dashboard)    │
+│                                                         │
+│  Pydantic v2 models · psycopg2 · plain SQL queries      │
+└──────────────────────┬──────────────────────────────────┘
+                       │ psycopg2 (raw SQL)
+┌──────────────────────▼──────────────────────────────────┐
+│                  PostgreSQL 15                           │
+│                                                         │
+│  categories ──┐                                         │
+│  suppliers  ──┼──► products ──► order_items ◄── orders  │
+│                              │                          │
+│                              ▼                          │
+│                        stock_alerts                     │
+│                     (written by trigger)                │
+│                                                         │
+│  Triggers:  trg_low_stock · trg_products_updated_at     │
+│  Indexes:   category, supplier, order_id, product_id    │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Data flow for an order:**
+
+```
+POST /orders
+  │
+  ├─ BEGIN transaction
+  ├─ SELECT ... FOR UPDATE   (lock product row)
+  ├─ check stock_qty >= quantity
+  ├─ INSERT order_items      (snapshot unit_price)
+  ├─ UPDATE products.stock_qty -= quantity
+  │     └─ trg_low_stock fires if stock_qty < reorder_level
+  │           └─ INSERT stock_alerts (automatic, no app code)
+  └─ COMMIT
+```
+
+---
+
+## Roadmap
+
+Things I'm planning to add:
+
+- [ ] **Demand forecasting** — ML model (linear regression / ARIMA) on order history to predict restock dates
+- [ ] **WebSocket alerts** — push low-stock notifications to the dashboard in real time instead of polling
+- [ ] **Multi-warehouse support** — `warehouses` table, stock split across locations
+- [ ] **Supplier lead time tracking** — record expected delivery days per supplier, factor into reorder suggestions
+- [ ] **CSV export** — download any analytics view as a spreadsheet
+- [ ] **Auth** — JWT-based login so the API isn't open by default
+- [ ] **Docker + docker-compose** — one-command local setup without installing Postgres manually
+
+PRs for any of these are welcome.
+
+---
+
+## Contributing
+
+1. Fork the repo and create a branch off `initial-release`
+
+   ```bash
+   git checkout -b feat/your-feature
+   ```
+
+2. Make your changes. If you're touching the DB layer, update `db/schema.sql` and add a migration note in your PR description.
+
+3. Run tests before pushing:
+
+   ```bash
+   pytest tests/ -m "not integration"
+   ```
+
+4. Open a pull request against `initial-release`. Describe what changed and why.
+
+**Good first issues:**
+- Add Docker + docker-compose setup
+- Add a `/products/{id}` GET endpoint
+- Add CSV export to any analytics endpoint
+- Write more integration tests for the analytics queries
+
+---
+
 ## Star History
 
 <div align="center">
