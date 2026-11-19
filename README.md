@@ -48,6 +48,28 @@ seed data → PostgreSQL schema + triggers → FastAPI REST API → analytics qu
 
 ## Quickstart
 
+### Docker (recommended — no Postgres install needed)
+
+```bash
+git clone https://github.com/ansh44233/SmartInventory
+cd SmartInventory
+
+# start Postgres + API (schema applied automatically)
+docker compose up -d db api
+
+# seed data
+docker compose run --rm seed
+
+# open dashboard
+# http://localhost:8000
+# http://localhost:8000/docs
+```
+
+To stop: `docker compose down`
+To wipe the DB volume too: `docker compose down -v`
+
+### Manual setup
+
 **Requires:** Python 3.11+, PostgreSQL 15+
 
 ```bash
@@ -413,7 +435,7 @@ Things I'm planning to add:
 - [ ] **Supplier lead time tracking** — record expected delivery days per supplier, factor into reorder suggestions
 - [ ] **CSV export** — download any analytics view as a spreadsheet
 - [ ] **Auth** — JWT-based login so the API isn't open by default
-- [ ] **Docker + docker-compose** — one-command local setup without installing Postgres manually
+- [x] **Docker + docker-compose** — one-command local setup without installing Postgres manually
 
 PRs for any of these are welcome.
 
