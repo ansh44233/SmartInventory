@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartInventory — Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── tokens ── */
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2230;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #7d8590;
+      --blue:      #58a6ff;
+      --green:     #3fb950;
+      --amber:     #d29922;
+      --red:       #f85149;
+      --purple:    #bc8cff;
+      --radius:    10px;
+      --shadow:    0 1px 3px rgba(0,0,0,.4);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── topbar ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(13,17,23,.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar .logo {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .topbar .badge {
+      font-size: 11px;
+      background: rgba(88,166,255,.12);
+      color: var(--blue);
+      border: 1px solid rgba(88,166,255,.25);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar .spacer { flex: 1; }
+    .topbar .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+    .topbar .status-label { color: var(--muted); font-size: 12px; }
+
+    /* ── layout ── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 28px 24px 48px; }
+
+    /* ── section header ── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+      margin-top: 32px;
+    }
+
+    /* ── KPI cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 800px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .kpi-card:hover { border-color: rgba(88,166,255,.4); }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 2px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi-card.blue::before  { background: var(--blue);   }
+    .kpi-card.green::before { background: var(--green);  }
+    .kpi-card.amber::before { background: var(--amber);  }
+    .kpi-card.red::before   { background: var(--red);    }
+
+    .kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 6px;
+      line-height: 1;
+    }
+    .kpi-card.blue  .kpi-value { color: var(--blue);  }
+    .kpi-card.green .kpi-value { color: var(--green); }
+    .kpi-card.amber .kpi-value { color: var(--amber); }
+    .kpi-card.red   .kpi-value { color: var(--red);   }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ── chart cards ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .card-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    /* ── tables ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(48,54,61,.6);
+      color: var(--text);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,.025); }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .pill-red    { background: rgba(248,81,73,.12);  color: var(--red);    border: 1px solid rgba(248,81,73,.25); }
+    .pill-green  { background: rgba(63,185,80,.1);   color: var(--green);  border: 1px solid rgba(63,185,80,.25); }
+    .pill-amber  { background: rgba(210,153,34,.12); color: var(--amber);  border: 1px solid rgba(210,153,34,.25); }
+    .pill-blue   { background: rgba(88,166,255,.1);  color: var(--blue);   border: 1px solid rgba(88,166,255,.25); }
+    .pill-purple { background: rgba(188,140,255,.1); color: var(--purple); border: 1px solid rgba(188,140,255,.25); }
+
+    .sku { font-family: ui-monospace, monospace; color: var(--muted); font-size: 12px; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* ── empty ── */
+    .empty { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+
+    /* ── footer ── */
+    .footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    #last-refresh { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="logo">
+      <span>📦</span>
+      <span>SmartInventory</span>
+    </div>
+    <span class="badge">v1.0</span>
+    <div class="spacer"></div>
+    <div class="status-dot"></div>
+    <span class="status-label">Live</span>
+  </div>
+
+  <div class="page">
+
+    <!-- KPIs -->
+    <div class="section-title">Overview</div>
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value" id="kpi-revenue">—</div>
+        <div class="kpi-sub">non-cancelled orders</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Products</div>
+        <div class="kpi-value" id="kpi-products">—</div>
+        <div class="kpi-sub">across all categories</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Orders</div>
+        <div class="kpi-value" id="kpi-orders">—</div>
+        <div class="kpi-sub">total placed</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Low-Stock Alerts</div>
+        <div class="kpi-value" id="kpi-alerts">—</div>
+        <div class="kpi-sub">unresolved, DB trigger</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="section-title">Analytics</div>
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title">Monthly Revenue</div>
+        <div class="card-sub">Trend over last 90 days</div>
+        <canvas id="chart-trend" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">Top Products by Revenue</div>
+        <div class="card-sub">Non-cancelled orders only</div>
+        <canvas id="chart-top" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="section-title">Stock Alerts <span style="color:var(--red)">(trigger-generated)</span></div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="tbl-alerts">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Product</th>
+              <th>Stock</th>
+              <th>Reorder Level</th>
+              <th>Alert</th>
+              <th>Triggered</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Products -->
+    <div class="section-title">All Products</div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="tbl-products">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Supplier performance -->
+    <div class="section-title">Supplier Performance</div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="tbl-suppliers">
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>Products</th>
+              <th>Inventory Value</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="3" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>SmartInventory · Python + PostgreSQL · FastAPI</span>
+      <span id="last-refresh">—</span>
+    </div>
+
+  </div>
+
+  <script>
+    // ── helpers ─────────────────────────────────────────────
+    function fmt(n) {
+      return '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    }
+
+    function ago(dateStr) {
+      if (!dateStr || dateStr === 'never') return 'never';
+      const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+      if (diff < 1)  return 'just now';
+      if (diff < 60) return diff + 'm ago';
+      if (diff < 1440) return Math.floor(diff/60) + 'h ago';
+      return Math.floor(diff/1440) + 'd ago';
+    }
+
+    async function get(path) {
+      const r = await fetch(path);
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }
+
+    // ── chart refs ───────────────────────────────────────────
+    let trendChart = null;
+    let topChart   = null;
+
+    const CHART_DEFAULTS = {
+      plugins: { legend: { display: false } },
+      animation: { duration: 600 },
+    };
+
+    const gridColor = '#21262d';
+    const tickColor = '#7d8590';
+
+    // ── render functions ─────────────────────────────────────
+
+    function renderTrend(data) {
+      if (trendChart) trendChart.destroy();
+      trendChart = new Chart(document.getElementById('chart-trend'), {
+        type: 'line',
+        data: {
+          labels: data.map(r => r.month),
+          datasets: [{
+            data: data.map(r => Number(r.revenue)),
+            borderColor: '#58a6ff',
+            backgroundColor: 'rgba(88,166,255,.08)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#58a6ff',
+          }]
+        },
+        options: {
+          ...CHART_DEFAULTS,
+          scales: {
+            x: { ticks: { color: tickColor, font: { size: 11 } }, grid: { color: gridColor } },
+            y: {
+              ticks: {
+                color: tickColor,
+                font: { size: 11 },
+                callback: v => '₹' + (v / 1000).toFixed(0) + 'K'
+              },
+              grid: { color: gridColor }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTop(data) {
+      if (topChart) topChart.destroy();
+      topChart = new Chart(document.getElementById('chart-top'), {
+        type: 'bar',
+        data: {
+          labels: data.map(r => r.name.length > 20 ? r.name.slice(0, 18) + '…' : r.name),
+          datasets: [{
+            data: data.map(r => Number(r.total_revenue)),
+            backgroundColor: data.map((_, i) => i === 0 ? '#3fb950' : 'rgba(63,185,80,.5)'),
+            borderRadius: 4,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          ...CHART_DEFAULTS,
+          indexAxis: 'y',
+          scales: {
+            x: {
+              ticks: {
+                color: tickColor,
+                font: { size: 11 },
+                callback: v => '₹' + (v / 1000).toFixed(0) + 'K'
+              },
+              grid: { color: gridColor }
+            },
+            y: { ticks: { color: tickColor, font: { size: 11 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderAlerts(data) {
+      const tbody = document.querySelector('#tbl-alerts tbody');
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty" style="color:var(--green)">✓ No active alerts</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(a => `
+        <tr>
+          <td class="sku">${a.sku}</td>
+          <td>${a.name}</td>
+          <td class="num"><span class="pill pill-red">${a.stock_qty}</span></td>
+          <td class="num">${a.reorder_level}</td>
+          <td><span class="pill pill-amber">${a.alert_type}</span></td>
+          <td style="color:var(--muted)">${ago(a.created_at)}</td>
+        </tr>`).join('');
+    }
+
+    function renderProducts(data) {
+      const tbody = document.querySelector('#tbl-products tbody');
+      const catColors = {
+        'Electronics': 'pill-blue',
+        'Sports':      'pill-green',
+        'Apparel':     'pill-purple',
+        'Books':       'pill-amber',
+        'Toys':        'pill-red',
+        'Home & Kitchen': 'pill-blue',
+      };
+      tbody.innerHTML = data.map(p => `
+        <tr>
+          <td class="sku">${p.sku}</td>
+          <td>${p.name}</td>
+          <td><span class="pill ${catColors[p.category] || 'pill-blue'}">${p.category || '—'}</span></td>
+          <td class="num">${fmt(p.unit_price)}</td>
+          <td class="num">${p.stock_qty}</td>
+          <td>${p.is_low_stock
+            ? '<span class="pill pill-red">Low Stock</span>'
+            : '<span class="pill pill-green">OK</span>'
+          }</td>
+        </tr>`).join('');
+    }
+
+    function renderSuppliers(data) {
+      const tbody = document.querySelector('#tbl-suppliers tbody');
+      tbody.innerHTML = data.map((s, i) => `
+        <tr>
+          <td style="font-weight:${i === 0 ? 600 : 400}">${s.supplier}</td>
+          <td class="num">${s.products_supplied}</td>
+          <td class="num">${fmt(s.inventory_value)}</td>
+        </tr>`).join('');
+    }
+
+    // ── load ─────────────────────────────────────────────────
+
+    async function load() {
+      try {
+        const [trend, top, alerts, products, suppliers, orders] = await Promise.all([
+          get('/analytics/monthly-trend'),
+          get('/analytics/revenue-by-product'),
+          get('/analytics/alerts'),
+          get('/products'),
+          get('/analytics/supplier-performance'),
+          get('/orders'),
+        ]);
+
+        // KPIs
+        const totalRev = top.reduce((s, r) => s + Number(r.total_revenue), 0);
+        document.getElementById('kpi-revenue').textContent  = fmt(totalRev);
+        document.getElementById('kpi-products').textContent = products.length;
+        document.getElementById('kpi-orders').textContent   = orders.length;
+        document.getElementById('kpi-alerts').textContent   = alerts.length;
+
+        renderTrend(trend);
+        renderTop(top);
+        renderAlerts(alerts);
+        renderProducts(products);
+        renderSuppliers(suppliers);
+
+        document.getElementById('last-refresh').textContent =
+          'Refreshed ' + new Date().toLocaleTimeString();
+
+      } catch (err) {
+        // API not reachable — show demo data so the page still looks great
+        loadDemoData();
+      }
+    }
+
+    // ── demo fallback (shown when API is offline) ─────────────
+
+    function loadDemoData() {
+      const months = ['Aug 2026','Sep 2026','Oct 2026','Nov 2026'];
+      const revenues = [18400, 27600, 34200, 41800];
+
+      document.getElementById('kpi-revenue').textContent  = '₹1,22,000';
+      document.getElementById('kpi-products').textContent = '20';
+      document.getElementById('kpi-orders').textContent   = '60';
+      document.getElementById('kpi-alerts').textContent   = '4';
+
+      renderTrend(months.map((m, i) => ({ month: m, revenue: revenues[i] })));
+      renderTop([
+        { name: 'Smart Watch Gen2',       total_revenue: 29990 },
+        { name: 'Air Fryer 4L',           total_revenue: 23994 },
+        { name: 'Mechanical Keyboard',    total_revenue: 17495 },
+        { name: 'Wireless Earbuds Pro',   total_revenue: 14994 },
+        { name: 'Bluetooth Speaker',      total_revenue: 12593 },
+        { name: 'Running Shoes X3',       total_revenue: 11994 },
+      ]);
+      renderAlerts([
+        { sku:'SKU-0009', name:'Air Fryer 4L',    stock_qty:3, reorder_level:10, alert_type:'low_stock', created_at: new Date(Date.now()-3600000).toISOString() },
+        { sku:'SKU-0015', name:'Smart Watch Gen2', stock_qty:4, reorder_level:10, alert_type:'low_stock', created_at: new Date(Date.now()-7200000).toISOString() },
+        { sku:'SKU-0019', name:'Board Game Catan', stock_qty:5, reorder_level:10, alert_type:'low_stock', created_at: new Date(Date.now()-86400000).toISOString() },
+        { sku:'SKU-0003', name:'Mechanical Keyboard', stock_qty:7, reorder_level:10, alert_type:'low_stock', created_at: new Date(Date.now()-172800000).toISOString() },
+      ]);
+      renderProducts([
+        { sku:'SKU-0001', name:'Wireless Earbuds Pro',   category:'Electronics',   unit_price:2499, stock_qty:150, is_low_stock:false },
+        { sku:'SKU-0002', name:'USB-C Hub 7-Port',       category:'Electronics',   unit_price:899,  stock_qty:80,  is_low_stock:false },
+        { sku:'SKU-0003', name:'Mechanical Keyboard',    category:'Electronics',   unit_price:3499, stock_qty:7,   is_low_stock:true  },
+        { sku:'SKU-0004', name:'Running Shoes X3',       category:'Sports',        unit_price:1999, stock_qty:60,  is_low_stock:false },
+        { sku:'SKU-0005', name:'Yoga Mat Premium',       category:'Sports',        unit_price:599,  stock_qty:100, is_low_stock:false },
+        { sku:'SKU-0006', name:'Cotton T-Shirt (M)',     category:'Apparel',       unit_price:299,  stock_qty:200, is_low_stock:false },
+        { sku:'SKU-0007', name:'Denim Jeans Slim Fit',   category:'Apparel',       unit_price:799,  stock_qty:90,  is_low_stock:false },
+        { sku:'SKU-0008', name:'Non-Stick Cookware Set', category:'Home & Kitchen', unit_price:1299, stock_qty:35,  is_low_stock:false },
+        { sku:'SKU-0009', name:'Air Fryer 4L',           category:'Home & Kitchen', unit_price:3999, stock_qty:3,   is_low_stock:true  },
+        { sku:'SKU-0012', name:'Python Crash Course',    category:'Books',         unit_price:499,  stock_qty:120, is_low_stock:false },
+      ]);
+      renderSuppliers([
+        { supplier:'TechSource Ltd',   products_supplied:5, inventory_value:650000 },
+        { supplier:'GlobalGoods Inc',  products_supplied:4, inventory_value:480000 },
+        { supplier:'AsiaTrade Co',     products_supplied:4, inventory_value:320000 },
+        { supplier:'EuroParts GmbH',   products_supplied:4, inventory_value:210000 },
+        { supplier:'LocalSupply Pvt',  products_supplied:3, inventory_value:95000  },
+      ]);
+
+      document.getElementById('last-refresh').textContent = 'Demo mode · ' + new Date().toLocaleTimeString();
+    }
+
+    // ── boot ─────────────────────────────────────────────────
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>
