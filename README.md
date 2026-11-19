@@ -18,6 +18,12 @@
 
 ---
 
+<div align="center">
+  <img src="assets/dashboard-preview.svg" alt="SmartInventory Dashboard" width="100%"/>
+</div>
+
+---
+
 Inventory management and analytics backend built with raw PostgreSQL — no ORM, every query hand-written. Tracks products, suppliers, orders, and stock levels. When stock drops below the reorder threshold, a PL/pgSQL trigger fires and writes an alert row automatically. Analytics endpoints use window functions and CTEs to surface revenue trends, slow movers, and category rankings. Everything is served through a FastAPI REST API and a live Chart.js dashboard.
 
 ```

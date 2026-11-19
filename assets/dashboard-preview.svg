@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#58a6ff" stop-opacity="0.01"/>
+    </linearGradient>
+    <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3fb950"/>
+      <stop offset="100%" stop-color="#2ea043"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="720" fill="#0d1117"/>
+
+  <!-- Topbar -->
+  <rect width="1200" height="52" fill="#161b22"/>
+  <rect width="1200" height="1" y="52" fill="#30363d"/>
+  <!-- Logo -->
+  <text x="20" y="32" font-family="-apple-system,system-ui,sans-serif" font-size="15" font-weight="600" fill="#e6edf3">📦 SmartInventory</text>
+  <!-- Badge -->
+  <rect x="186" y="16" width="30" height="20" rx="10" fill="rgba(88,166,255,0.12)" stroke="#3a5a8a" stroke-width="1"/>
+  <text x="201" y="30" font-family="system-ui,sans-serif" font-size="10" fill="#58a6ff" text-anchor="middle">v1.0</text>
+  <!-- Live dot -->
+  <circle cx="1168" cy="26" r="5" fill="#3fb950"/>
+  <text x="1178" y="30" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590" text-anchor="end" x="1160">Live</text>
+
+  <!-- Section: Overview -->
+  <text x="20" y="78" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="1">OVERVIEW</text>
+
+  <!-- KPI Cards -->
+  <!-- Total Revenue -->
+  <rect x="20" y="88" width="270" height="88" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="20" y="88" width="270" height="2" rx="1" fill="#58a6ff"/>
+  <text x="36" y="112" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">TOTAL REVENUE</text>
+  <text x="36" y="148" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#58a6ff">₹1,22,000</text>
+  <text x="36" y="166" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590">non-cancelled orders</text>
+
+  <!-- Products -->
+  <rect x="306" y="88" width="270" height="88" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="306" y="88" width="270" height="2" rx="1" fill="#3fb950"/>
+  <text x="322" y="112" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">PRODUCTS</text>
+  <text x="322" y="148" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#3fb950">20</text>
+  <text x="322" y="166" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590">across all categories</text>
+
+  <!-- Orders -->
+  <rect x="592" y="88" width="270" height="88" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="592" y="88" width="270" height="2" rx="1" fill="#d29922"/>
+  <text x="608" y="112" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">ORDERS</text>
+  <text x="608" y="148" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#d29922">60</text>
+  <text x="608" y="166" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590">total placed</text>
+
+  <!-- Alerts -->
+  <rect x="878" y="88" width="302" height="88" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <rect x="878" y="88" width="302" height="2" rx="1" fill="#f85149"/>
+  <text x="894" y="112" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">LOW-STOCK ALERTS</text>
+  <text x="894" y="148" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#f85149">4</text>
+  <text x="894" y="166" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590">unresolved, DB trigger</text>
+
+  <!-- Section: Analytics -->
+  <text x="20" y="206" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="1">ANALYTICS</text>
+
+  <!-- Chart Card 1: Monthly Revenue -->
+  <rect x="20" y="216" width="572" height="230" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="36" y="240" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Monthly Revenue</text>
+  <text x="36" y="256" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590">Trend over last 90 days</text>
+
+  <!-- Line chart axes -->
+  <line x1="60" y1="420" x2="560" y2="420" stroke="#21262d" stroke-width="1"/>
+  <line x1="60" y1="380" x2="560" y2="380" stroke="#21262d" stroke-width="1"/>
+  <line x1="60" y1="340" x2="560" y2="340" stroke="#21262d" stroke-width="1"/>
+  <line x1="60" y1="300" x2="560" y2="300" stroke="#21262d" stroke-width="1"/>
+
+  <!-- Y labels -->
+  <text x="54" y="423" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="end">0</text>
+  <text x="54" y="383" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="end">10K</text>
+  <text x="54" y="343" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="end">20K</text>
+  <text x="54" y="303" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="end">30K</text>
+
+  <!-- Area fill -->
+  <path d="M100,395 C180,375 260,340 340,318 C420,296 480,278 540,268 L540,420 L100,420 Z" fill="url(#lineGrad)"/>
+  <!-- Line -->
+  <path d="M100,395 C180,375 260,340 340,318 C420,296 480,278 540,268" fill="none" stroke="#58a6ff" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Dots -->
+  <circle cx="100" cy="395" r="4" fill="#58a6ff"/>
+  <circle cx="220" cy="358" r="4" fill="#58a6ff"/>
+  <circle cx="340" cy="318" r="4" fill="#58a6ff"/>
+  <circle cx="460" cy="284" r="4" fill="#58a6ff"/>
+  <circle cx="540" cy="268" r="4" fill="#58a6ff"/>
+
+  <!-- X labels -->
+  <text x="100" y="434" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="middle">Aug</text>
+  <text x="220" y="434" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="middle">Sep</text>
+  <text x="340" y="434" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="middle">Oct</text>
+  <text x="460" y="434" font-family="monospace" font-size="9" fill="#7d8590" text-anchor="middle">Nov</text>
+
+  <!-- Chart Card 2: Top Products -->
+  <rect x="608" y="216" width="572" height="230" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="624" y="240" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Top Products by Revenue</text>
+  <text x="624" y="256" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590">Non-cancelled orders only</text>
+
+  <!-- Horizontal bars -->
+  <!-- Bar 1 -->
+  <text x="624" y="286" font-family="system-ui,sans-serif" font-size="11" fill="#e6edf3">Smart Watch Gen2</text>
+  <rect x="624" y="291" width="420" height="16" rx="3" fill="url(#barGrad)" opacity="1"/>
+  <text x="1050" y="304" font-family="monospace" font-size="10" fill="#7d8590">₹71,988</text>
+  <!-- Bar 2 -->
+  <text x="624" y="324" font-family="system-ui,sans-serif" font-size="11" fill="#e6edf3">Air Fryer 4L</text>
+  <rect x="624" y="329" width="300" height="16" rx="3" fill="url(#barGrad)" opacity="0.75"/>
+  <text x="930" y="342" font-family="monospace" font-size="10" fill="#7d8590">₹23,994</text>
+  <!-- Bar 3 -->
+  <text x="624" y="362" font-family="system-ui,sans-serif" font-size="11" fill="#e6edf3">Mechanical Keyboard</text>
+  <rect x="624" y="367" width="240" height="16" rx="3" fill="url(#barGrad)" opacity="0.6"/>
+  <text x="870" y="380" font-family="monospace" font-size="10" fill="#7d8590">₹17,495</text>
+  <!-- Bar 4 -->
+  <text x="624" y="400" font-family="system-ui,sans-serif" font-size="11" fill="#e6edf3">Wireless Earbuds Pro</text>
+  <rect x="624" y="405" width="190" height="16" rx="3" fill="url(#barGrad)" opacity="0.5"/>
+  <text x="820" y="418" font-family="monospace" font-size="10" fill="#7d8590">₹14,994</text>
+  <!-- Bar 5 -->
+  <text x="624" y="434" font-family="system-ui,sans-serif" font-size="11" fill="#e6edf3">Bluetooth Speaker</text>
+  <rect x="624" y="439" width="155" height="10" rx="3" fill="url(#barGrad)" opacity="0.4"/>
+
+  <!-- Section: Stock Alerts -->
+  <text x="20" y="468" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="1">STOCK ALERTS <tspan fill="#f85149">(trigger-generated)</tspan></text>
+
+  <rect x="20" y="478" width="1160" height="130" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Table header -->
+  <rect x="20" y="478" width="1160" height="28" rx="8" fill="#0d1117"/>
+  <rect x="20" y="496" width="1160" height="10" fill="#0d1117"/>
+  <text x="36" y="497" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">SKU</text>
+  <text x="140" y="497" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">PRODUCT</text>
+  <text x="460" y="497" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">STOCK</text>
+  <text x="560" y="497" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">REORDER</text>
+  <text x="680" y="497" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">ALERT</text>
+  <text x="820" y="497" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#7d8590" letter-spacing="0.8">TRIGGERED</text>
+  <line x1="20" y1="506" x2="1180" y2="506" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Row 1 -->
+  <text x="36" y="526" font-family="monospace" font-size="12" fill="#7d8590">SKU-0009</text>
+  <text x="140" y="526" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#f85149">Air Fryer 4L</text>
+  <rect x="455" y="514" width="38" height="18" rx="9" fill="rgba(248,81,73,0.12)" stroke="rgba(248,81,73,0.3)" stroke-width="1"/>
+  <text x="474" y="527" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#f85149" text-anchor="middle">3</text>
+  <text x="560" y="526" font-family="system-ui,sans-serif" font-size="12" fill="#e6edf3">10</text>
+  <rect x="675" y="514" width="72" height="18" rx="9" fill="rgba(210,153,34,0.12)" stroke="rgba(210,153,34,0.3)" stroke-width="1"/>
+  <text x="711" y="527" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#d29922" text-anchor="middle">low_stock</text>
+  <text x="820" y="526" font-family="system-ui,sans-serif" font-size="12" fill="#7d8590">1h ago</text>
+  <line x1="20" y1="535" x2="1180" y2="535" stroke="rgba(48,54,61,0.5)" stroke-width="1"/>
+
+  <!-- Row 2 -->
+  <text x="36" y="556" font-family="monospace" font-size="12" fill="#7d8590">SKU-0015</text>
+  <text x="140" y="556" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#f85149">Smart Watch Gen2</text>
+  <rect x="455" y="544" width="38" height="18" rx="9" fill="rgba(248,81,73,0.12)" stroke="rgba(248,81,73,0.3)" stroke-width="1"/>
+  <text x="474" y="557" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#f85149" text-anchor="middle">4</text>
+  <text x="560" y="556" font-family="system-ui,sans-serif" font-size="12" fill="#e6edf3">10</text>
+  <rect x="675" y="544" width="72" height="18" rx="9" fill="rgba(210,153,34,0.12)" stroke="rgba(210,153,34,0.3)" stroke-width="1"/>
+  <text x="711" y="557" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#d29922" text-anchor="middle">low_stock</text>
+  <text x="820" y="556" font-family="system-ui,sans-serif" font-size="12" fill="#7d8590">2h ago</text>
+  <line x1="20" y1="565" x2="1180" y2="565" stroke="rgba(48,54,61,0.5)" stroke-width="1"/>
+
+  <!-- Row 3 -->
+  <text x="36" y="586" font-family="monospace" font-size="12" fill="#7d8590">SKU-0019</text>
+  <text x="140" y="586" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#f85149">Board Game Catan</text>
+  <rect x="455" y="574" width="38" height="18" rx="9" fill="rgba(248,81,73,0.12)" stroke="rgba(248,81,73,0.3)" stroke-width="1"/>
+  <text x="474" y="587" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#f85149" text-anchor="middle">5</text>
+  <text x="560" y="586" font-family="system-ui,sans-serif" font-size="12" fill="#e6edf3">10</text>
+  <rect x="675" y="574" width="72" height="18" rx="9" fill="rgba(210,153,34,0.12)" stroke="rgba(210,153,34,0.3)" stroke-width="1"/>
+  <text x="711" y="587" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#d29922" text-anchor="middle">low_stock</text>
+  <text x="820" y="586" font-family="system-ui,sans-serif" font-size="12" fill="#7d8590">1d ago</text>
+
+  <!-- Footer -->
+  <line x1="20" y1="626" x2="1180" y2="626" stroke="#30363d" stroke-width="1"/>
+  <text x="20" y="644" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590">SmartInventory · Python + PostgreSQL · FastAPI</text>
+  <text x="1180" y="644" font-family="system-ui,sans-serif" font-size="11" fill="#7d8590" text-anchor="end">Refreshed 12:14:33 PM</text>
+</svg>
