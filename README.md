@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=flat&logo=postgresql&logoColor=white)](https://postgresql.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![pytest](https://img.shields.io/badge/tests-41%20passing-brightgreen?style=flat&logo=pytest)](tests/)
+[![pytest](https://img.shields.io/badge/tests-70%20passing-brightgreen?style=flat&logo=pytest)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
 
 </div>
@@ -289,6 +289,7 @@ pytest tests/ -v
 | `test_products.py` | 10 | Unit |
 | `test_orders.py` | 8 | Unit |
 | `test_analytics.py` | 13 | Unit |
+| `test_forecasting.py` | 29 | Unit |
 | `test_integration_db.py` | 10 | Integration |
 
 The integration tests create a real `smartinventory_test` database, run all assertions — including trigger verification, constraint checks, and analytics SQL — then drop it automatically.
