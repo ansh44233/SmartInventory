@@ -41,6 +41,7 @@ seed data → PostgreSQL schema + triggers → FastAPI REST API → analytics qu
 | `pipeline/seed.py` | Generates 20 products + 60 orders with psycopg2 |
 | `api/main.py` | FastAPI app — CRUD endpoints + 5 analytics endpoints |
 | `dashboard/index.html` | Chart.js dashboard, auto-refreshes every 30 s |
+| `ml/forecasting.py` | Ridge regression demand forecasting, CLI + API |
 | `tests/` | 41 pytest tests — unit (mocked) + integration (real DB) |
 
 ---
@@ -198,6 +199,80 @@ cur.execute(
 
 ---
 
+## ML Forecasting
+
+Demand forecasting for each product, trained on order history.
+
+**Model:** Polynomial Ridge Regression (degree 2, α=1.0) via scikit-learn.
+
+**Features per day:**
+
+| Feature | What it captures |
+|---|---|
+| Day index | Long-term trend |
+| Day of week | Weekly demand seasonality |
+| 3-day rolling avg | Short-term momentum |
+| 7-day rolling avg | Medium-term momentum |
+
+Date gaps (days with no orders) are filled with 0 before training. Confidence bounds use the residual standard deviation from training (80% interval ≈ ±1.28σ). The restock alert projects cumulative forecast demand day-by-day until it exceeds current stock.
+
+**API:**
+
+```
+GET /analytics/forecast/{product_id}?days=30
+GET /analytics/forecast                        ← all products summary
+```
+
+**Example response:**
+
+```json
+{
+  "product_id": 1,
+  "product_name": "Wireless Earbuds Pro",
+  "sku": "SKU-0001",
+  "history_days": 42,
+  "avg_daily_demand": 2.1,
+  "model_mae": 0.6,
+  "restock_alert": null,
+  "forecast": [
+    {"date": "2026-11-20", "predicted_qty": 2.3, "lower": 1.1, "upper": 3.5},
+    {"date": "2026-11-21", "predicted_qty": 2.4, "lower": 1.2, "upper": 3.6},
+    ...
+  ]
+}
+```
+
+**CLI:**
+
+```bash
+# single product
+python ml/forecasting.py --product_id 1 --days 30
+
+# all products summary
+python ml/forecasting.py --all
+```
+
+**Output:**
+
+```
+=======================================================
+  Forecast: Wireless Earbuds Pro (SKU-0001)
+=======================================================
+  History:          42 days
+  Avg daily demand: 2.1 units/day
+  Model MAE:        0.6 units
+
+  Next 30-day forecast (first 7 shown):
+  Date           Predicted      Low     High
+  ------------------------------------------
+  2026-11-20           2.3      1.1      3.5
+  2026-11-21           2.4      1.2      3.6
+  2026-11-22           2.5      1.3      3.7
+  ... (23 more days)
+```
+
+---
+
 ## Tests
 
 ```bash
@@ -331,7 +406,7 @@ POST /orders
 
 Things I'm planning to add:
 
-- [ ] **Demand forecasting** — ML model (linear regression / ARIMA) on order history to predict restock dates
+- [x] **Demand forecasting** — polynomial Ridge regression on order history, 80% confidence bounds, restock alerts
 - [ ] **WebSocket alerts** — push low-stock notifications to the dashboard in real time instead of polling
 - [ ] **Multi-warehouse support** — `warehouses` table, stock split across locations
 - [ ] **Supplier lead time tracking** — record expected delivery days per supplier, factor into reorder suggestions
