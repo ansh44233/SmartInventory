@@ -1,27 +1,114 @@
+<div align="center">
+
 # SmartInventory
 
-Inventory management + analytics backend I built to get better at raw SQL and PostgreSQL internals. No ORM, no magic — every query is written by hand.
+**Real-time inventory analytics engine — Python · PostgreSQL · FastAPI**
 
-The idea was simple: track products, suppliers, and orders, then answer business questions through SQL — revenue trends, slow movers, top sellers per category. Ended up going deeper than planned, adding PL/pgSQL triggers and a live dashboard.
+</div>
+
+<div align="center">
+
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=flat&logo=postgresql&logoColor=white)](https://postgresql.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![pytest](https://img.shields.io/badge/tests-41%20passing-brightgreen?style=flat&logo=pytest)](tests/)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
+
+</div>
 
 ---
 
-## Stack
+Inventory management and analytics backend built with raw PostgreSQL — no ORM, every query hand-written. Tracks products, suppliers, orders, and stock levels. When stock drops below the reorder threshold, a PL/pgSQL trigger fires and writes an alert row automatically. Analytics endpoints use window functions and CTEs to surface revenue trends, slow movers, and category rankings. Everything is served through a FastAPI REST API and a live Chart.js dashboard.
 
-- **Python 3.11** — FastAPI, psycopg2, Pydantic v2
-- **PostgreSQL 15** — raw SQL throughout, no SQLAlchemy
-- **Chart.js** — frontend dashboard, plain HTML/JS
-- **pytest** — unit + integration tests
+```
+seed data → PostgreSQL schema + triggers → FastAPI REST API → analytics queries → live dashboard
+```
 
 ---
 
-## What it actually does
+## What's inside
 
-Products, categories, suppliers, orders, order line items — standard relational stuff. The interesting parts:
+| Layer | What it does |
+|---|---|
+| `db/schema.sql` | Tables, FK constraints, indexes, 2 PL/pgSQL triggers |
+| `db/analytics.sql` | 6 standalone analytics queries for reference |
+| `pipeline/seed.py` | Generates 20 products + 60 orders with psycopg2 |
+| `api/main.py` | FastAPI app — CRUD endpoints + 5 analytics endpoints |
+| `dashboard/index.html` | Chart.js dashboard, auto-refreshes every 30 s |
+| `tests/` | 41 pytest tests — unit (mocked) + integration (real DB) |
 
-**Two database triggers:**
+---
 
-One fires whenever `stock_qty` drops below `reorder_level` — it writes a row to `stock_alerts` automatically. No polling from Python, the DB handles it.
+## Quickstart
+
+**Requires:** Python 3.11+, PostgreSQL 15+
+
+```bash
+git clone https://github.com/ansh44233/SmartInventory
+cd SmartInventory
+
+python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # macOS / Linux
+
+pip install -r requirements.txt
+
+# create and apply schema
+psql -U postgres -c "CREATE DATABASE smartinventory;"
+psql -U postgres -d smartinventory -f db/schema.sql
+
+# configure
+copy .env.example .env        # then edit .env → add your postgres password
+
+# seed
+python pipeline/seed.py
+
+# run
+uvicorn api.main:app --reload
+```
+
+| URL | What you get |
+|---|---|
+| http://localhost:8000 | Live analytics dashboard |
+| http://localhost:8000/docs | Interactive Swagger UI |
+
+---
+
+## API
+
+### Products
+
+```
+GET    /products                   list (filter: ?category=  ?low_stock=true)
+POST   /products                   create
+PATCH  /products/{id}/stock        adjust stock (positive = restock, negative = deduct)
+```
+
+### Orders
+
+```
+GET    /orders                     list (filter: ?status=delivered)
+POST   /orders                     place order — atomic, checks stock, snapshots price
+```
+
+### Analytics
+
+```
+GET    /analytics/revenue-by-product      top 10 products by revenue
+GET    /analytics/monthly-trend           month-over-month revenue
+GET    /analytics/slow-movers             no sales in last 30 days
+GET    /analytics/supplier-performance    inventory value per supplier
+GET    /analytics/alerts                  unresolved low-stock alerts
+```
+
+---
+
+## SQL
+
+<details>
+<summary><strong>Trigger — automatic low-stock alert</strong></summary>
+
+Fires on every `INSERT` or `UPDATE` to `products.stock_qty`. No application-side polling needed.
 
 ```sql
 CREATE OR REPLACE FUNCTION check_low_stock()
@@ -35,117 +122,80 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+CREATE TRIGGER trg_low_stock
+    AFTER INSERT OR UPDATE OF stock_qty ON products
+    FOR EACH ROW EXECUTE FUNCTION check_low_stock();
 ```
 
-The second one keeps `updated_at` in sync on every product update — also a trigger, same pattern.
+</details>
 
-**Analytics queries using window functions:**
+<details>
+<summary><strong>Window function — cumulative monthly revenue</strong></summary>
 
 ```sql
--- cumulative revenue month over month
-SUM(SUM(oi.quantity * oi.unit_price))
-    OVER (ORDER BY DATE_TRUNC('month', o.created_at))
-AS cumulative_revenue
+SELECT
+    DATE_TRUNC('month', o.created_at)   AS month,
+    SUM(oi.quantity * oi.unit_price)    AS revenue,
+    SUM(SUM(oi.quantity * oi.unit_price))
+        OVER (ORDER BY DATE_TRUNC('month', o.created_at))
+                                        AS cumulative_revenue
+FROM orders o
+JOIN order_items oi ON oi.order_id = o.id
+WHERE o.status NOT IN ('cancelled')
+GROUP BY month
+ORDER BY month;
 ```
+
+</details>
+
+<details>
+<summary><strong>CTE + RANK — top 5 products per category</strong></summary>
 
 ```sql
--- top 5 products per category
-RANK() OVER (PARTITION BY c.id ORDER BY SUM(oi.quantity * oi.unit_price) DESC)
+WITH ranked AS (
+    SELECT
+        p.name,
+        c.name                              AS category,
+        SUM(oi.quantity * oi.unit_price)    AS revenue,
+        RANK() OVER (
+            PARTITION BY c.id
+            ORDER BY SUM(oi.quantity * oi.unit_price) DESC
+        ) AS rnk
+    FROM products p
+    JOIN categories c   ON c.id = p.category_id
+    JOIN order_items oi ON oi.product_id = p.id
+    JOIN orders o       ON o.id = oi.order_id
+    WHERE o.status NOT IN ('cancelled')
+    GROUP BY p.name, c.name, c.id
+)
+SELECT * FROM ranked WHERE rnk <= 5;
 ```
 
-**Atomic order placement:**
+</details>
 
-Orders lock the product row with `SELECT FOR UPDATE` before deducting stock. Prevents overselling if two requests come in at the same time.
+<details>
+<summary><strong>Atomic order placement — SELECT FOR UPDATE</strong></summary>
+
+Stock is locked at the row level before deduction. Prevents overselling under concurrent requests.
 
 ```python
 cur.execute(
     "SELECT unit_price, stock_qty FROM products WHERE id=%s FOR UPDATE",
     (item["product_id"],)
 )
-# check stock → deduct → insert order_item, all in one transaction
+# check available stock → deduct → insert order_item, all in one transaction
+# unit_price is snapshotted here — changing the product price later won't touch this order
 ```
 
-Price is also snapshotted at order time into `order_items.unit_price` — changing a product's price later doesn't touch historical orders.
-
----
-
-## Project structure
-
-```
-├── db/
-│   ├── schema.sql       # all tables, indexes, triggers
-│   └── analytics.sql    # standalone queries I use for reference
-├── pipeline/
-│   └── seed.py          # generates 20 products + 60 orders
-├── api/
-│   └── main.py          # FastAPI app — CRUD + 5 analytics endpoints
-├── dashboard/
-│   └── index.html       # live dashboard, auto-refreshes every 30s
-├── tests/
-│   ├── test_products.py
-│   ├── test_orders.py
-│   ├── test_analytics.py
-│   └── test_integration_db.py   # tests the triggers + constraints directly
-└── requirements.txt
-```
-
----
-
-## Running it locally
-
-Needs Python 3.11+ and PostgreSQL 15+.
-
-```bash
-git clone https://github.com/ansh44233/SmartInventory
-cd SmartInventory
-
-python -m venv venv
-venv\Scripts\activate
-
-pip install -r requirements.txt
-
-# set up DB
-psql -U postgres -c "CREATE DATABASE smartinventory;"
-psql -U postgres -d smartinventory -f db/schema.sql
-
-# copy the env file and add your postgres password
-copy .env.example .env
-
-# seed some data
-python pipeline/seed.py
-
-# start the server
-uvicorn api.main:app --reload
-```
-
-Dashboard → http://localhost:8000  
-API docs → http://localhost:8000/docs
-
----
-
-## API endpoints
-
-```
-GET  /products                       list products (filter: ?category= ?low_stock=true)
-POST /products                       add a product
-PATCH /products/{id}/stock           adjust stock (delta can be negative)
-
-GET  /orders                         list orders (filter: ?status=)
-POST /orders                         place an order
-
-GET  /analytics/revenue-by-product   top 10 by revenue
-GET  /analytics/monthly-trend        month-over-month revenue
-GET  /analytics/slow-movers          no sales in last 30 days
-GET  /analytics/supplier-performance inventory value per supplier
-GET  /analytics/alerts               unresolved low-stock alerts
-```
+</details>
 
 ---
 
 ## Tests
 
 ```bash
-# unit tests — no DB needed, everything mocked
+# unit tests — no database needed
 pytest tests/ -m "not integration"
 
 # full suite — needs postgres
@@ -153,12 +203,17 @@ set TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/smartinvento
 pytest tests/ -v
 ```
 
-The integration tests spin up a real `smartinventory_test` database, run all assertions against it, then drop it. They cover the triggers directly — insert a product below reorder level, check that a `stock_alerts` row appears, that kind of thing.
+| File | Tests | Type |
+|---|---|---|
+| `test_products.py` | 10 | Unit |
+| `test_orders.py` | 8 | Unit |
+| `test_analytics.py` | 13 | Unit |
+| `test_integration_db.py` | 10 | Integration |
+
+The integration tests create a real `smartinventory_test` database, run all assertions — including trigger verification, constraint checks, and analytics SQL — then drop it automatically.
 
 ---
 
-## Notes
+## License
 
-- `.env` is gitignored — only `.env.example` is committed
-- The dashboard falls back to hardcoded demo data if the API isn't running, so it always looks right
-- `analytics.sql` is just a reference file — the actual queries live in `api/main.py`
+MIT © [Ansh](https://github.com/ansh44233)
