@@ -19,7 +19,7 @@
 ---
 
 <div align="center">
-  <img src="assets/dashboard-preview.svg" alt="SmartInventory Dashboard" width="100%"/>
+  <img src="assets/dashboard-preview.png" alt="SmartInventory Dashboard" width="100%"/>
 </div>
 
 ---
