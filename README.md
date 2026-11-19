@@ -8,6 +8,7 @@
 
 <div align="center">
 
+[![CI](https://github.com/ansh44233/SmartInventory/actions/workflows/ci.yml/badge.svg)](https://github.com/ansh44233/SmartInventory/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=flat&logo=postgresql&logoColor=white)](https://postgresql.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)

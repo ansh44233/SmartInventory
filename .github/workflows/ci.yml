@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: ["initial-release", "main"]
+  pull_request:
+    branches: ["initial-release", "main"]
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB:       smartinventory_test
+          POSTGRES_USER:     postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Apply schema to test DB
+        run: psql -f db/schema.sql
+        env:
+          PGHOST:     localhost
+          PGPORT:     5432
+          PGUSER:     postgres
+          PGPASSWORD: postgres
+          PGDATABASE: smartinventory_test
+
+      - name: Run unit tests
+        run: pytest tests/ -m "not integration" -v --tb=short
+
+      - name: Run integration tests
+        run: pytest tests/ -m "integration" -v --tb=short
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/smartinventory_test
+          DATABASE_URL:      postgresql://postgres:postgres@localhost:5432/smartinventory_test
