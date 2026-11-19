@@ -16,6 +16,11 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+# ML forecasting (imported lazily to avoid startup errors if DB is offline)
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from ml.forecasting import forecast_product, forecast_all
+
 load_dotenv()
 DSN = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/smartinventory")
 
@@ -264,6 +269,59 @@ def active_alerts():
         WHERE sa.resolved = FALSE
         ORDER BY sa.created_at DESC
     """)
+
+
+# ── FORECASTING ──────────────────────────────────────────────
+
+@app.get("/analytics/forecast/{product_id}", tags=["Forecasting"])
+def forecast_product_endpoint(
+    product_id: int,
+    days: int = Query(default=30, ge=1, le=90, description="Forecast horizon in days"),
+):
+    """
+    ML demand forecast for a single product.
+    Uses polynomial Ridge regression trained on order history.
+    Returns daily predicted demand + 80% confidence bounds + restock alert.
+    """
+    try:
+        result = forecast_product(product_id, horizon_days=days)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Forecast error: {str(e)}")
+
+    return {
+        "product_id":        result.product_id,
+        "product_name":      result.product_name,
+        "sku":               result.sku,
+        "history_days":      result.history_days,
+        "avg_daily_demand":  result.avg_daily_demand,
+        "model_mae":         result.model_mae,
+        "restock_alert":     result.restock_alert,
+        "forecast": [
+            {
+                "date":          fp.date,
+                "predicted_qty": fp.predicted_qty,
+                "lower":         fp.lower,
+                "upper":         fp.upper,
+            }
+            for fp in result.forecast
+        ],
+    }
+
+
+@app.get("/analytics/forecast", tags=["Forecasting"])
+def forecast_all_products(
+    days: int = Query(default=30, ge=1, le=90),
+):
+    """
+    Summary forecast for all products — total 30-day projected demand,
+    avg daily demand, restock alerts, and model MAE for each product.
+    """
+    try:
+        return forecast_all(horizon_days=days)
+    except Exception as e:
+        raise HTTPException(500, f"Forecast error: {str(e)}")
 
 
 # ── DASHBOARD ────────────────────────────────────────────────

@@ -343,6 +343,26 @@
       </div>
     </div>
 
+    <!-- ML Forecast -->
+    <div class="section-title">🤖 ML Demand Forecast <span style="color:var(--muted);font-weight:400">(next 30 days · Ridge Regression)</span></div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="tbl-forecast">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Product</th>
+              <th>Avg Daily</th>
+              <th>30-day Forecast</th>
+              <th>Model MAE</th>
+              <th>Restock Alert</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="footer">
       <span>SmartInventory · Python + PostgreSQL · FastAPI</span>
       <span id="last-refresh">—</span>
@@ -501,17 +521,38 @@
         </tr>`).join('');
     }
 
+    function renderForecast(data) {
+      const tbody = document.querySelector('#tbl-forecast tbody');
+      if (!data || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No forecast data</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(p => `
+        <tr>
+          <td class="sku">${p.sku}</td>
+          <td>${p.product_name}</td>
+          <td class="num">${p.avg_daily_demand}</td>
+          <td class="num" style="color:var(--blue);font-weight:600">${p.forecast_total_30d}</td>
+          <td class="num" style="color:var(--muted)">${p.model_mae}</td>
+          <td>${p.restock_alert
+            ? `<span class="pill pill-red" style="font-size:.68rem">${p.restock_alert.slice(0,60)}…</span>`
+            : '<span class="pill pill-green">OK</span>'
+          }</td>
+        </tr>`).join('');
+    }
+
     // ── load ─────────────────────────────────────────────────
 
     async function load() {
       try {
-        const [trend, top, alerts, products, suppliers, orders] = await Promise.all([
+        const [trend, top, alerts, products, suppliers, orders, forecast] = await Promise.all([
           get('/analytics/monthly-trend'),
           get('/analytics/revenue-by-product'),
           get('/analytics/alerts'),
           get('/products'),
           get('/analytics/supplier-performance'),
           get('/orders'),
+          get('/analytics/forecast'),
         ]);
 
         // KPIs
@@ -526,6 +567,7 @@
         renderAlerts(alerts);
         renderProducts(products);
         renderSuppliers(suppliers);
+        renderForecast(forecast);
 
         document.getElementById('last-refresh').textContent =
           'Refreshed ' + new Date().toLocaleTimeString();
@@ -580,6 +622,13 @@
         { supplier:'AsiaTrade Co',     products_supplied:4, inventory_value:320000 },
         { supplier:'EuroParts GmbH',   products_supplied:4, inventory_value:210000 },
         { supplier:'LocalSupply Pvt',  products_supplied:3, inventory_value:95000  },
+      ]);
+      renderForecast([
+        { sku:'SKU-0015', product_name:'Smart Watch Gen2',    avg_daily_demand:1.2, forecast_total_30d:36.0, model_mae:0.4, restock_alert:'Stock (30 units) projected to run out in ~25 day(s) based on forecast demand.' },
+        { sku:'SKU-0009', product_name:'Air Fryer 4L',        avg_daily_demand:0.8, forecast_total_30d:24.0, model_mae:0.3, restock_alert:'Stock (3) is already at or below reorder level (10).' },
+        { sku:'SKU-0001', product_name:'Wireless Earbuds Pro', avg_daily_demand:2.1, forecast_total_30d:63.0, model_mae:0.6, restock_alert:null },
+        { sku:'SKU-0004', product_name:'Running Shoes X3',    avg_daily_demand:0.9, forecast_total_30d:27.0, model_mae:0.2, restock_alert:null },
+        { sku:'SKU-0012', product_name:'Python Crash Course', avg_daily_demand:0.5, forecast_total_30d:15.0, model_mae:0.1, restock_alert:null },
       ]);
 
       document.getElementById('last-refresh').textContent = 'Demo mode · ' + new Date().toLocaleTimeString();
