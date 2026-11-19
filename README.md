@@ -214,6 +214,75 @@ The integration tests create a real `smartinventory_test` database, run all asse
 
 ---
 
+## Example
+
+Place an order and watch stock deduct + alert fire:
+
+```bash
+# 1. add a product with low reorder threshold
+curl -X POST http://localhost:8000/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sku": "SKU-DEMO",
+    "name": "Wireless Mouse",
+    "category_id": 1,
+    "supplier_id": 1,
+    "unit_price": 799,
+    "stock_qty": 12,
+    "reorder_level": 10
+  }'
+
+# 2. place an order that brings stock below the threshold
+curl -X POST http://localhost:8000/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_name": "Rahul Sharma",
+    "items": [{"product_id": 1, "quantity": 5}]
+  }'
+# → {"order_id": 1, "order_ref": "abc-123"}
+# → stock drops to 7, PostgreSQL trigger fires, alert row written automatically
+
+# 3. check alerts — no polling, trigger already did it
+curl http://localhost:8000/analytics/alerts
+# → [{"sku": "SKU-DEMO", "name": "Wireless Mouse", "stock_qty": 7, "reorder_level": 10, "alert_type": "low_stock"}]
+
+# 4. restock
+curl -X PATCH http://localhost:8000/products/1/stock \
+  -H "Content-Type: application/json" \
+  -d '{"delta": 50}'
+# → {"product_id": 1, "new_stock_qty": 57}
+```
+
+Revenue analytics after a few orders:
+
+```bash
+curl http://localhost:8000/analytics/revenue-by-product
+# → [
+#     {"sku": "SKU-0015", "name": "Smart Watch Gen2", "category": "Electronics", "units_sold": 12, "total_revenue": 71988},
+#     {"sku": "SKU-0009", "name": "Air Fryer 4L",     "category": "Home & Kitchen", "units_sold": 6, "total_revenue": 23994},
+#     ...
+#   ]
+
+curl http://localhost:8000/analytics/monthly-trend
+# → [
+#     {"month": "Sep 2026", "revenue": 18400},
+#     {"month": "Oct 2026", "revenue": 34200},
+#     {"month": "Nov 2026", "revenue": 41800}
+#   ]
+```
+
+---
+
+## Star History
+
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=ansh44233/SmartInventory&type=Date)](https://star-history.com/#ansh44233/SmartInventory&Date)
+
+</div>
+
+---
+
 ## License
 
 MIT © [Ansh](https://github.com/ansh44233)
